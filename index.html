@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do List</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link href="style.css" rel="stylesheet">
+    <style>
+        /* General Styles */
+        body, h1, h2, p,h3, input, textarea, button {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        
+            background-color: #7cddf5;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+        
+            width: 100%;
+            padding: 20px;
+            background: #7ac1ef;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction:column;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: #240999;
+            font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif
+        }
+
+        h2 {
+            font-size: 2em;
+            margin-bottom: 20px;
+            color: #5b2b2b;
+            font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif
+        }
+
+        form {
+            width: 100%;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            font-family: fantasy;
+            font-size: large;
+        }
+
+        label {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        input[type="text"],
+        textarea,
+        input[type="datetime-local"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+
+        button {
+            background-color: #2065ae;
+            color: #fff;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-family: Georgia, 'Times New Roman', Times, serif;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+            font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+        }
+
+        .task-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            width: 100%;
+            font-family: cursive;
+        }
+
+        .task-card {
+            background: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            width: calc(50% - 20px);
+            box-sizing: border-box;
+            transition: box-shadow 0.3s;
+        }
+
+        .task-card:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .task-card h3 {
+            margin-top: 0;
+            font-size: 1.5em;
+            color: #333;
+        }
+
+        .task-card p {
+            margin: 10px 0;
+            color: #555;
+        }
+
+        .task-card button {
+            background-color: #041179;
+        }
+
+        .task-card button:hover {
+            background-color: #041179;
+        }
+
+        @media (max-width: 600px) {
+            .task-card {
+                width: 100%;
+            }
+
+            button {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Priority Planner</h1>
+        <h2>Add Priority Tasks</h2>
+
+        <form id="taskForm">
+            <label for="taskName">Task Name:</label>
+            <input type="text" id="taskName" name="taskName" placeholder="Enter task name" required>
+            
+            <label for="description">Description:</label>
+            <textarea id="description" name="description" placeholder="Enter your task"></textarea>
+            
+            <label for="deadline">Due date:</label>
+            <input type="datetime-local" id="deadline" name="deadline">
+            
+            <button type="submit">Add</button>
+        </form>
+
+        <h2>Your Priorities</h2>
+        <div id="task-list" class="task-list"></div>
+    </div>
+
+    <script>
+        function fetchTasks() {
+            fetch('http://localhost:4000/tasks')
+                .then(response => response.json())
+                .then(tasks => {
+                    const taskList = document.getElementById('task-list');
+                    taskList.innerHTML = '';
+
+                    tasks.forEach((task, index) => {
+                        const taskElement = document.createElement('div');
+                        taskElement.classList.add('task-card');
+
+                        taskElement.innerHTML = `
+                            <h3>${task.taskName}</h3>
+                            <p>${task.description}</p>
+                            <p>Deadline: ${task.deadline}</p>
+                            <button onclick="deleteTask(${index})">Remove</button>
+                            <button onclick="editTask(${index})">Update</button>
+                        `;
+
+                        taskList.appendChild(taskElement);
+                    });
+                })
+                .catch(error => console.error('Error fetching tasks:', error));
+        }
+
+        function deleteTask(taskId) {
+            fetch(`http://localhost:4000/delete-task/${taskId}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.text())
+            .then(message => {
+                console.log(message);
+                fetchTasks();
+            })
+            .catch(error => console.error('Error deleting task:', error));
+        }
+
+        function editTask(index) {
+            fetch('http://localhost:4000/tasks')
+                .then(response => response.json())
+                .then(tasks => {
+                    const task = tasks[index];
+
+                    document.getElementById('taskName').value = task.taskName;
+                    document.getElementById('description').value = task.description;
+                    document.getElementById('deadline').value = task.deadline;
+
+                    document.getElementById('taskForm').setAttribute('data-edit-index', index);
+                });
+        }
+
+        document.getElementById('taskForm').addEventListener('submit', (event) => {
+            event.preventDefault();
+
+            const taskName = document.getElementById('taskName').value;
+            const description = document.getElementById('description').value;
+            const deadline = document.getElementById('deadline').value;
+
+            const editIndex = document.getElementById('taskForm').getAttribute('data-edit-index');
+
+            if (editIndex !== null) {
+                updateTask(editIndex, taskName, description, deadline);
+            } else {
+                addTask(taskName, description, deadline);
+            }
+        });
+
+        function addTask(taskName, description, deadline) {
+            fetch('http://localhost:4000/add-task', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ taskName, description, deadline })
+            })
+            .then(response => response.text())
+            .then(message => {
+                console.log(message);
+                fetchTasks();
+                document.getElementById('taskForm').reset();
+            })
+            .catch(error => console.error('Error adding task:', error));
+        }
+
+        function updateTask(index, taskName, description, deadline) {
+            fetch(`http://localhost:4000/update-task/${index}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ taskName, description, deadline })
+            })
+            .then(response => response.text())
+            .then(message => {
+                console.log(message);
+                fetchTasks();
+                document.getElementById('taskForm').reset();
+                document.getElementById('taskForm').removeAttribute('data-edit-index');
+            })
+            .catch(error => console.error('Error updating task:', error));
+        }
+
+        window.onload = fetchTasks;
+    </script>
+</body>
+</html>
